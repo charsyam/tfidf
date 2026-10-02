@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TF-IDF · BM25 실험실</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><div class="brand">문장을 숫자로 <span> / NLP LAB</span></div><span class="badge">TF-IDF · BM25 비교 실험</span></header>
+<main>
+<section class="intro"><p class="eyebrow">INTERACTIVE LEARNING</p><h1>어떤 단어가<br><em>이 문장을 특별하게</em> 할까?</h1><p>짧은 문장을 넣고, 토큰이 중요도 점수로 바뀌는 과정을 따라가 보세요.</p></section>
+<div class="layout"><aside>
+<section class="panel"><div class="section-title"><span class="step">01</span><h2>문장 입력</h2></div>
+<div class="modes" role="group" aria-label="언어 선택"><button type="button" data-mode="ko" class="active" aria-pressed="true">한국어</button><button type="button" data-mode="en" aria-pressed="false">일반 · 영어</button></div>
+<p class="hint" id="mode-note">Kiwi 기본 사전으로 형태소와 품사를 분석합니다.</p>
+<div id="inputs"></div><button type="button" class="text-button" id="add">+ 문장 추가</button>
+<details id="dictionary-section" open><summary>한국어 사용자 사전</summary><label for="dictionary" class="hint">고유명사로 분석할 단어를 한 줄에 하나씩 입력하세요.</label><textarea id="dictionary" rows="3" placeholder="초거대언어모델"></textarea><p class="hint">기본 사전에 추가합니다. 비우면 기본 사전으로 돌아갑니다.</p></details>
+</section>
+<section class="panel"><div class="section-title"><span class="step">02</span><h2>전처리 설정</h2></div>
+<label class="option"><input type="checkbox" id="lower" checked> Lowercase <small>영문 소문자 변환</small></label>
+<label class="option" id="stem-option"><input type="checkbox" id="stemming" checked> Stemming <small>Porter 어간 추출</small></label>
+<label class="option"><input type="checkbox" id="filter" checked> <span id="filter-label">품사 필터</span></label>
+<label class="option"><input type="checkbox" id="stop" checked> 불용어 제거 <small>계산에서 제외</small></label>
+<details open><summary>불용어 목록 편집</summary><label for="stopwords" class="hint">한 줄에 한 토큰. 기본 목록을 수정하거나 단어를 추가하세요.</label><textarea id="stopwords" rows="5" aria-describedby="stop-help"></textarea><p id="stop-help" class="hint">한국어는 형태소, 영어는 stemming 이전 단어와 비교합니다. 대소문자는 구분하지 않습니다. 목록을 비우면 아무 단어도 제거하지 않습니다.</p><button type="button" id="reset-stopwords">기본 목록 복원</button><p id="stop-save-status" class="hint" role="status" aria-live="polite">언어별 목록과 제거 옵션은 이 브라우저에 자동 저장됩니다.</p></details>
+<button id="run" class="primary">분석하기 →</button><p id="status" role="status" aria-live="polite"></p>
+</section>
+<section class="panel"><div class="section-title"><span class="step">05</span><h2>검색 점수 실험</h2></div>
+<label for="query">검색어</label><textarea id="query" rows="2" maxlength="500">우주 영화</textarea>
+<p class="hint">문장과 같은 전처리를 적용합니다. 검색어는 문서 수·DF·평균 길이에 포함하지 않습니다.</p>
+<label class="parameter" for="k1">k₁ · 반복 빈도의 포화 <output id="k1-value">1.50</output></label><input id="k1" type="range" min="0.01" max="5" step="0.01" value="1.5">
+<label class="parameter" for="b">b · 문서 길이 보정 <output id="b-value">0.75</output></label><input id="b" type="range" min="0" max="1" step="0.01" value="0.75">
+<label class="parameter" for="delta_l">BM25L δ <output id="delta_l-value">0.50</output></label><input id="delta_l" type="range" min="0" max="3" step="0.05" value="0.5">
+<label class="parameter" for="delta_plus">BM25+ δ <output id="delta_plus-value">1.00</output></label><input id="delta_plus" type="range" min="0" max="3" step="0.05" value="1">
+<p class="hint">b=0은 길이 보정을 끕니다. δ는 일치하는 단어의 빈도 가중치에 하한을 더합니다.</p>
+<button id="ranking-example" type="button">반복·길이 비교 예제</button>
+</section></aside>
+<div class="results">
+<section class="panel"><div class="section-title"><span class="step">03</span><h2>토큰의 여행</h2></div><p class="hint">각 토큰의 변화를 행 단위로 따라가세요. 취소선은 계산에서 제외된 토큰입니다.</p><div id="doc-tabs" class="tabs" role="group" aria-label="분석 문장 선택"></div><div id="pipeline"></div></section>
+<section class="panel"><div class="section-title"><span class="step">04</span><h2>단어의 중요도</h2></div><div class="formula">TF = 단어 출현 횟수 (원시 빈도)<br>IDF = ln(문장 수 / 단어가 등장한 문장 수)<br><strong>TF-IDF = TF × IDF</strong></div><p class="hint">모든 문장에 등장하면 IDF는 0입니다. 평활화와 벡터 정규화는 적용하지 않습니다.</p><div id="matrix" class="scroll"></div><div id="calculation" aria-live="polite"></div><h3>선택 문장의 단어 점수</h3><div id="bars"></div></section>
+<section class="panel"><div class="section-title"><span class="step">06</span><h2>검색 모델 비교</h2></div>
+<div id="query-tokens"></div><div id="ranking-summary" class="hint"></div>
+<p class="hint">모델별 점수 크기는 척도가 다릅니다. 순위와 같은 모델의 변화량을 비교하세요. 괄호 안 변화량은 직전 분석 대비이며 동점은 같은 순위입니다.</p>
+<div id="ranking-table" class="scroll"></div><div id="ranking-bars"></div>
+<h3>선택 문장 · 검색 단어별 기여도</h3><div id="ranking-detail" class="scroll"></div>
+<details><summary>모델별 공식과 차이</summary><div class="formula">
+f = 단어 횟수, L = 문서 토큰 수, avgL = 평균 토큰 수<br>A = 1 − b + b × L / avgL, c = f / A<br>TF-IDF: Σ f × ln(N/DF)<br>BM25: Σ ln(1 + (N − DF + 0.5)/(DF + 0.5)) × (k₁ + 1)f/(f + k₁A)<br>BM25L: Σ ln((N + 1)/(DF + 0.5)) × (k₁ + 1)(c + δ)/(k₁ + c + δ)<br>BM25+: Σ ln((N + 1)/DF) × [(k₁ + 1)f/(f + k₁A) + δ]
+</div><p class="hint">합계는 중복을 제거한 검색 토큰에 대해 계산합니다. f=0 또는 DF=0이면 기여도는 0입니다. TF-IDF는 검색 단어의 기존 가중치 합이며 코사인 유사도가 아닙니다. BM25는 양수 IDF를 쓰고 (k₁+1) 배율을 포함합니다. BM25L/+는 각각 고유 IDF를 사용합니다. δ=0이어도 IDF가 달라 모델 점수가 같지는 않습니다.</p><p class="hint">수식 참고: <a href="https://cs.uwaterloo.ca/~jimmylin/publications/Kamphuis_etal_ECIR2020.pdf" target="_blank" rel="noreferrer">BM25 변종 재현성 연구, Table 1</a>. 문서 길이는 실제 포함 토큰 수를 사용합니다.</p></details>
+</section></div></div>
+<footer>한 입력칸 = 한 문서 · 빈 문장은 계산하지 않습니다 · 일반 모드의 stemming은 영어용입니다.</footer>
+</main><script src="/ranking.js"></script><script src="/app.js"></script></body></html>
